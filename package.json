@@ -1,0 +1,26 @@
+{
+  "name": "amazon-location-sample-map-with-geocoder",
+  "version": "1.0.0",
+  "keywords": [
+    "amazon location",
+    "map",
+    "location",
+    "als",
+    "amazon location service",
+    "maplibre",
+    "maplibre-gl-geocoder"
+  ],
+  "author": {
+    "name": "Amazon Web Services",
+    "url": "https://aws.amazon.com"
+  },
+  "license": "MIT",
+  "workspaces": [
+    "map-with-geocoder"
+  ],
+  "devDependencies": {
+    "eslint": "^8.46.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.28.0"
+  }
+}
