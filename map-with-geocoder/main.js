@@ -1,9 +1,8 @@
 // Amazon Location Service Resources:
-const apiKey = "<Amazon Location API key>";
+const Key = "<Amazon Location API key>";
 const mapName = "<Amazon Location Map resource name>";
-const placesName = "<Amazon Location PlaceIndex resource name>";
+const IndexName = "<Amazon Location PlaceIndex resource name>";
 const region = "<AWS Region, e.g., eu-central-1>";
-
 // Add Geocoder control to the map via callbacks that are called by maplibre-gl-geocoder.
 // forwardGeocode: required for geocoding (Amazon Location SearchPlaceIndexForText API)
 // getSuggestions + searchByPlaceId: required for autosugget (Amazon Location SearchPlaceIndexForSuggestions + GetPlace APIs)
