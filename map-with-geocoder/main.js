@@ -1,8 +1,8 @@
 // Amazon Location Service Resources:
-const Key = "v1.public.eyJqdGkiOiJkODI0ZDVkYS0yYWUyLTQzYjgtOGRkMy1mNWYxMzRiZjg5ZWYifRk7fScsM_P7LoJwYuqNXe_ksJSXQrm0yp0YWRGYvHcUIDyoihR7uPG2aGUvWwOM3bQAusNPv6McF8NdIm48HCofJc2Md59-3jAsi1f4BncYspjVwz7W3h887YUGHaNRSZxWTlMpCzkyRypZ81EUXr7I-gOOiggPobcFVh25ScTt-_eogjF-808iXbBNxv8GQ0r32ykOBV4qeJEaYDSw77pS0O2CxXP7B25F35vziCdBgfEvb98fHjZ7GMY6Om8KNTXGAGKFbmpq2qnCTBslIQubbuiqMo11w4S5YScz3-5qnDWOx6Qedq1eMCEZe69dylS0Kiq9cwJXHo-xipp74jk.NjAyMWJkZWUtMGMyOS00NmRkLThjZTMtODEyOTkzZTUyMTBi";
-const mapName = "BlogMap";
-const IndexName = "BlogPlaceIndex";
-const region = "us-east-2";
+const apiKey = "<Amazon Location API key>";
+const mapName = "<Amazon Location Map resource name>";
+const placesName = "<Amazon Location PlaceIndex resource name>";
+const region = "<AWS Region, e.g., eu-central-1>";
 
 // Add Geocoder control to the map via callbacks that are called by maplibre-gl-geocoder.
 // forwardGeocode: required for geocoding (Amazon Location SearchPlaceIndexForText API)
