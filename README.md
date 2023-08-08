@@ -1,11 +1,10 @@
-## My Project
+# Amazon Location Sample For Map with Geocoder
 
-TODO: Fill this README out!
+This repository contains a sample application for Amazon Location Service. The sample app is built with JavaScript, HTML, and CSS.
 
-Be sure to:
+## List of sample apps
 
-* Change the title in this README
-* Edit your repository description on GitHub
+- [Display a map + search box on a webpage, with auto-suggest functionality](map-with-place-search)
 
 ## Security
 
