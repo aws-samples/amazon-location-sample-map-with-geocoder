@@ -1,35 +1,25 @@
-// Amazon Location Service:
-const apiKey = '<Amazon Location API key>';
-const mapName = '<Amazon Location Map resource>';
-const placesName = '<Amazon Location PlaceIndex resource>';
-const region = '<AWS Region, e.g. eu-central-1>';
+// Amazon Location Service Resources:
+const Key = "v1.public.eyJqdGkiOiJkODI0ZDVkYS0yYWUyLTQzYjgtOGRkMy1mNWYxMzRiZjg5ZWYifRk7fScsM_P7LoJwYuqNXe_ksJSXQrm0yp0YWRGYvHcUIDyoihR7uPG2aGUvWwOM3bQAusNPv6McF8NdIm48HCofJc2Md59-3jAsi1f4BncYspjVwz7W3h887YUGHaNRSZxWTlMpCzkyRypZ81EUXr7I-gOOiggPobcFVh25ScTt-_eogjF-808iXbBNxv8GQ0r32ykOBV4qeJEaYDSw77pS0O2CxXP7B25F35vziCdBgfEvb98fHjZ7GMY6Om8KNTXGAGKFbmpq2qnCTBslIQubbuiqMo11w4S5YScz3-5qnDWOx6Qedq1eMCEZe69dylS0Kiq9cwJXHo-xipp74jk.NjAyMWJkZWUtMGMyOS00NmRkLThjZTMtODEyOTkzZTUyMTBi";
+const mapName = "BlogMap";
+const IndexName = "BlogPlaceIndex";
+const region = "us-east-2";
 
 // Add Geocoder control to the map via callbacks that are called by maplibre-gl-geocoder.
 // forwardGeocode: required for geocoding (Amazon Location SearchPlaceIndexForText API)
 // getSuggestions + searchByPlaceId: required for autosugget (Amazon Location SearchPlaceIndexForSuggestions + GetPlace APIs)
-async function addGeocoder(map, authHelper) {
+async function addGeocoder(map, authHelper, client) {
   const amazonLocationGeocoderApi = {
     forwardGeocode: async (config) => {
-      let features = [];
       try {
-        // Set up parameters for search call
-        const params = {
-          IndexName: placesName,
-          Text: config.query,
-          Key: apiKey,
-        };
-
-        const client = new amazonLocationClient.LocationClient({
-          region,
-          ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
-        });
-
         // Set up command to call SearchPlaceIndexForText API
-        const command = new amazonLocationClient.SearchPlaceIndexForTextCommand(params);
-        const data = await client.send(command);
+        const data = await client.send(new amazonLocationClient.SearchPlaceIndexForTextCommand({
+          IndexName,
+          Text: config.query,
+          Key
+          }));
 
         // Convert the results to Carmen geojson to be returned to the MapLibre Geocoder
-        features = data.Results.map((result) => ({
+        data.Results.map((result) => ({
           type: 'Feature',
           geometry: {
             type: 'Point',
@@ -52,24 +42,13 @@ async function addGeocoder(map, authHelper) {
       };
     },
     getSuggestions: async (config) => {
-      let suggestions = [];
       try {
-        // Set up parameters for search call
-        const params = {
-          IndexName: placesName,
+        // Set up a command to call SearchPlaceIndexForSuggestions API;
+        const data = await client.send(new amazonLocationClient.SearchPlaceIndexForSuggestionsCommand({
+          IndexName,
           Text: config.query,
-          Key: apiKey,
-        };
-
-        const client = new amazonLocationClient.LocationClient({
-          region,
-          ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
-        });
-
-        // Set up a command to call SearchPlaceIndexForSuggestions API
-        const command = new amazonLocationClient.SearchPlaceIndexForSuggestionsCommand(params);
-        const data = await client.send(command);
-
+          Key
+          }));
         // Iterate over data.Results and return all suggestions and their place ids
         suggestions = data.Results.map((result) => ({
           text: result.Text,
@@ -86,21 +65,12 @@ async function addGeocoder(map, authHelper) {
     searchByPlaceId: async (config) => {
       let feature;
       try {
-        // Set up parameters for search call
-        const params = {
-          IndexName: placesName,
-          PlaceId: config.query,
-          Key: apiKey,
-        };
-
-        const client = new amazonLocationClient.LocationClient({
-          region,
-          ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
-        });
-
         // Set up command to call GetPlace API with a place Id of a selected suggestion
-        const command = new amazonLocationClient.GetPlaceCommand(params);
-        const data = await client.send(command);
+        const data = await client.send(new amazonLocationClient.GetPlaceCommand({
+          IndexName,
+          PlaceId: config.query,
+          Key
+          }));
 
         feature = {
           type: 'Feature',
@@ -128,26 +98,29 @@ async function addGeocoder(map, authHelper) {
 
 // Initialize a map
 async function initializeMap() {
-  const mlglMap = new maplibregl.Map({
+  const map = new maplibregl.Map({
     container: 'map', // HTML element ID of map element
     center: [-123.1187, 49.2819], // Initial map centerpoint
     zoom: 16, // Initial map zoom
-    style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${apiKey}`, // Defines the appearance of the map and authenticates using an API key
+    style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${Key}`, // Defines the appearance of the map and authenticates using an API key
   });
 
   // Add navigation control to the top left of the map
-  mlglMap.addControl(new maplibregl.NavigationControl(), 'top-left');
+  map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
-  return mlglMap;
+  return map;
 }
 
 async function main() {
   // Create an authentication helper instance using an API key
-  const authHelper = await amazonLocationAuthHelper.withAPIKey(apiKey);
-
+  const authHelper = await amazonLocationAuthHelper.withAPIKey(Key);
+  const client = new amazonLocationClient.LocationClient({
+    region,
+    ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
+  });
   // Initialize map and add a geocoder to it.
   const map = await initializeMap();
-  addGeocoder(map, authHelper);
+  addGeocoder(map, authHelper, client);
 }
 
 main();
