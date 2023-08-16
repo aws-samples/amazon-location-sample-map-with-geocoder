@@ -34,9 +34,6 @@ async function addGeocoder(map, authHelper, client) {
           place_type: ['place'],
           center: result.Place.Geometry.Point,
         }));
-        
-        // TODO is this actually expecting a GeoJSON FeatureCollection?
-        // It might behoove us to return `type: "FeatureCollection"` to be nice.
         return { features };
       } catch (error) {
         console.error(`Failed to forwardGeocode with error: ${error}`);
@@ -112,6 +109,7 @@ async function main() {
     region,
     ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
   });
+
   // Initialize map and add a geocoder to it.
   const map = await initializeMap();
   addGeocoder(map, authHelper, client);

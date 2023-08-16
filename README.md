@@ -4,7 +4,7 @@ This repository contains a sample application for Amazon Location Service. The s
 
 ## List of sample apps
 
-- [Display a map + search box on a webpage, with auto-suggest functionality](map-with-place-search)
+- [Display a map + search box on a webpage, with auto-suggest functionality](map-with-geocoder)
 
 ## Security
 
