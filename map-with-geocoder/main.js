@@ -1,8 +1,11 @@
+const { GetPlaceCommand, LocationClient, SearchPlaceIndexForSuggestionsCommand, SearchPlaceIndexForTextCommand } = amazonLocationClient;
+
 // Amazon Location Service Resources:
-const Key = "<Amazon Location API key>";
+const apiKey = "<Amazon Location API key>";
 const mapName = "<Amazon Location Map resource name>";
-const IndexName = "<Amazon Location PlaceIndex resource name>";
+const placeIndex = "<Amazon Location PlaceIndex resource name>";
 const region = "<AWS Region, e.g., eu-central-1>";
+
 // Add Geocoder control to the map via callbacks that are called by maplibre-gl-geocoder.
 // forwardGeocode: required for geocoding (Amazon Location SearchPlaceIndexForText API)
 // getSuggestions + searchByPlaceId: required for autosugget (Amazon Location SearchPlaceIndexForSuggestions + GetPlace APIs)
@@ -11,19 +14,16 @@ async function addGeocoder(map, authHelper, client) {
     forwardGeocode: async (config) => {
       try {
         // Set up command to call SearchPlaceIndexForText API
-        const data = await client.send(
-          new amazonLocationClient.SearchPlaceIndexForTextCommand({
-            IndexName,
-            Text: config.query,
-            Key,
-          })
-        );
+        const { Results } = await client.send(new SearchPlaceIndexForTextCommand({
+          IndexName: placeIndex,
+          Text: config.query
+        }));
 
-        // Convert the results to Carmen geojson to be returned to the MapLibre Geocoder
-        data.Results.map((result) => ({
-          type: "Feature",
+        // Convert the results to Carmen GeoJSON (<link>) to be returned to the MapLibre Geocoder
+        const features = Results.map((result) => ({
+          type: 'Feature',
           geometry: {
-            type: "Point",
+            type: 'Point',
             coordinates: result.Place.Geometry.Point,
           },
           place_name: result.Place.Label,
@@ -31,100 +31,84 @@ async function addGeocoder(map, authHelper, client) {
             id: result.Place.PlaceId,
           },
           text: result.Place.Label,
-          place_type: ["place"],
+          place_type: ['place'],
           center: result.Place.Geometry.Point,
         }));
-      } catch (e) {
-        console.error(`Failed to forwardGeocode with error: ${e}`);
+        
+        // TODO is this actually expecting a GeoJSON FeatureCollection?
+        // It might behoove us to return `type: "FeatureCollection"` to be nice.
+        return { features };
+      } catch (error) {
+        console.error(`Failed to forwardGeocode with error: ${error}`);
       }
-
-      return {
-        features,
-      };
     },
     getSuggestions: async (config) => {
       try {
         // Set up a command to call SearchPlaceIndexForSuggestions API;
-        const data = await client.send(
-          new amazonLocationClient.SearchPlaceIndexForSuggestionsCommand({
-            IndexName,
-            Text: config.query,
-            Key,
-          })
-        );
+        const { Results } = await client.send(new SearchPlaceIndexForSuggestionsCommand({
+          IndexName: placeIndex,
+          Text: config.query
+        }));
         // Iterate over data.Results and return all suggestions and their place ids
-        suggestions = data.Results.map((result) => ({
+        const suggestions = Results.map((result) => ({
           text: result.Text,
           placeId: result.PlaceId,
         }));
-      } catch (e) {
-        console.error(`Failed to getSuggestions with error: ${e}`);
+        
+        return { suggestions };
+      } catch (error) {
+        console.error(`Failed to getSuggestions with error: ${error}`);
       }
-
-      return {
-        suggestions,
-      };
     },
     searchByPlaceId: async (config) => {
-      let feature;
       try {
         // Set up command to call GetPlace API with a place Id of a selected suggestion
-        const data = await client.send(
-          new amazonLocationClient.GetPlaceCommand({
-            IndexName,
-            PlaceId: config.query,
-            Key,
-          })
-        );
+        const { Place } = await client.send(new GetPlaceCommand({
+          IndexName: placeIndex,
+          PlaceId: config.query,
+        }));
 
-        feature = {
-          type: "Feature",
+        const place = {
+          type: 'Feature',
           geometry: {
-            type: "Point",
-            coordinates: data.Place.Geometry.Point,
+            type: 'Point',
+            coordinates: Place.Geometry.Point,
           },
-          place_name: data.Place.Label,
-          text: data.Place.Label,
-          center: data.Place.Geometry.Point,
+          place_name: Place.Label,
+          text: Place.Label,
+          center: Place.Geometry.Point,
         };
-      } catch (e) {
-        console.error(`Failed to searchByPlaceId with error: ${e}`);
+        
+        return { place };
+      } catch (error) {
+        console.error(`Failed to searchByPlaceId with error: ${error}`);
       }
-
-      return {
-        place: feature,
-      };
     },
   };
 
   // Add Geocoder control to the map
-  map.addControl(
-    new MaplibreGeocoder(amazonLocationGeocoderApi, {
-      maplibregl,
-      showResultsWhileTyping: true,
-    })
-  );
+  map.addControl(new MaplibreGeocoder(amazonLocationGeocoderApi, { maplibregl, showResultsWhileTyping: true }));
 }
 
 // Initialize a map
 async function initializeMap() {
   const map = new maplibregl.Map({
-    container: "map", // HTML element ID of map element
+    container: 'map', // HTML element ID of map element
     center: [-123.1187, 49.2819], // Initial map centerpoint
     zoom: 16, // Initial map zoom
-    style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${Key}`, // Defines the appearance of the map and authenticates using an API key
+    style: `https://maps.geo.${region}.amazonaws.com/maps/v0/maps/${mapName}/style-descriptor?key=${apiKey}`, // Defines the appearance of the map and authenticates using an API key
   });
 
   // Add navigation control to the top left of the map
-  map.addControl(new maplibregl.NavigationControl(), "top-left");
+  map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
   return map;
 }
 
 async function main() {
   // Create an authentication helper instance using an API key
-  const authHelper = await amazonLocationAuthHelper.withAPIKey(Key);
-  const client = new amazonLocationClient.LocationClient({
+  const authHelper = await amazonLocationAuthHelper.withAPIKey(apiKey);
+  const client = new LocationClient({
     region,
     ...authHelper.getLocationClientConfig(), // Provides configuration required to make requests to Amazon Location
   });
